@@ -26,7 +26,7 @@ namespace UserManagement
             // For Entity Framework
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("ConnStr")));
 
-
+            services.AddScoped<IUserSettingsRepository, UserSettingsRepository>();
             services.AddScoped<IUserGroupsRepository, UserGroupsRepository>();
             services.AddScoped<IUserService, UserService>();
 
@@ -69,7 +69,7 @@ namespace UserManagement
             }
 
             app.UseCors(
-                options => options.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader().AllowCredentials()
+                options => options.WithOrigins("http://localhost:4200", "http://localhost:4201").AllowAnyMethod().AllowAnyHeader().AllowCredentials()
             );
 
             app.UseRouting();

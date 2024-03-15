@@ -258,7 +258,7 @@ namespace FileManagement.Controllers
                 ApplicationUser applicationUser = await _customAuthorizeService.GetUserAsync(ControllerContext);
                 if (applicationUser != null)
                 {
-                    var currentFile = await _fileDetailsRepository.GetFileDetails(id);
+                    var currentFile = await _fileDetailsRepository.GetFileDetails(id, applicationUser.Id);
                     if (currentFile != null)
                     {
                         currentFile.Name = folderModel.Name;
@@ -304,12 +304,24 @@ namespace FileManagement.Controllers
                 ApplicationUser applicationUser = await _customAuthorizeService.GetUserAsync(ControllerContext);
                 if (applicationUser != null)
                 {
-                    var currentFile = await _fileDetailsRepository.GetFileDetails(id);
+                    var currentFile = await _fileDetailsRepository.GetFileDetails(id, applicationUser.Id);
                     if (currentFile != null)
                     {
+                        currentFile.DeletedByUser = true;
                         currentFile.isDeleted = true;
+                        currentFile.UpdatedDate = DateTime.Now;
                         var updatedFolder = _fileDetailsRepository.UpdateFileDetails(currentFile);
                         await _folderRepository.SaveChangesAsync();
+
+                        await _userManagementService.DeleteGroupByUserGroupId(applicationUser.AccessToken, currentFile.UserGroupId);
+
+                        if (currentFile.FolderId != null)
+                        {
+                            var parentFolder = await _folderRepository.GetFolderDetails(currentFile.FolderId);
+                            parentFolder.Size--;
+                            _folderRepository.UpdateFolder(parentFolder);
+                            await _folderRepository.SaveChangesAsync();
+                        }
 
                         return Ok(updatedFolder);
 
@@ -318,7 +330,6 @@ namespace FileManagement.Controllers
                 }
 
                 return Unauthorized();
-
             }
             catch (Exception ex)
             {

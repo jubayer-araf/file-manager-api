@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using UserManagement.Authentication;
 using UserManagement.Entities;
-using UserManagement.Migrations;
 using UserManagement.Model;
 using UserManagement.Repositories;
 
@@ -131,9 +130,45 @@ namespace UserManagement.Controllers
         }
 
         // DELETE api/<UserGroupsController>/5
+        [Authorize]
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
+            try
+            {
+                
+                await _userGroupsRepository.DeleteUserGroupMappingsByGroupId(id);
+                await _userGroupsRepository.DeleteUserGroupId(id);
+                await _userGroupsRepository.SaveChanges();
+
+                return Ok("Curresponding user group mapping and user group is removed!");
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // DELETE api/<UserGroupsController>/5
+        [Authorize]
+        [HttpDelete("restore/{id}")]
+        public async Task<IActionResult> Restore(int id)
+        {
+            try
+            {
+
+                await _userGroupsRepository.RestoreUserGroupMappingsByGroupId(id);
+                await _userGroupsRepository.RestoreUserGroupId(id);
+                await _userGroupsRepository.SaveChanges();
+
+                return Ok("Curresponding user group mapping and user group is restored!");
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

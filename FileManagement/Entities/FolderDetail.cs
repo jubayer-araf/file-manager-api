@@ -11,6 +11,7 @@
         public int UserGroupId { get; set; }
         public string? UserGroupName { get; set; }
         public string OwnerId { get; set; }
+        public bool DeletedByUser { get; set; }
 
         public FolderDetail()
         {

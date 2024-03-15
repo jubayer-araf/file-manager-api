@@ -65,6 +65,39 @@ namespace UserManagement.Repositories
             return await _applicationDbContext.UserGroupMappings.Where(
                 x => x.isDeleted == false && x.UserGroupId == groupId).ToListAsync();
         }
+
+        public async Task DeleteUserGroupMappingsByGroupId(int groupId)
+        {
+            await _applicationDbContext.UserGroupMappings.Where(x => x.UserGroupId == groupId).ForEachAsync(d => { 
+                d.isDeleted = true;  
+                d.UpdatedDate = DateTime.Now; 
+            });
+        }
+
+        public async Task DeleteUserGroupId(int groupId)
+        {
+            await _applicationDbContext.UserGroups.Where(x => x.Id == groupId).ForEachAsync(d => { 
+                d.isDeleted = true;
+                d.UpdatedDate = DateTime.Now;
+            });
+        }
+
+        public async Task RestoreUserGroupMappingsByGroupId(int groupId)
+        {
+            await _applicationDbContext.UserGroupMappings.Where(x => x.UserGroupId == groupId && x.isDeleted).ForEachAsync(d => {
+                d.isDeleted = false;
+                d.UpdatedDate = DateTime.Now;
+            });
+        }
+
+        public async Task RestoreUserGroupId(int groupId)
+        {
+            await _applicationDbContext.UserGroups.Where(x => x.Id == groupId && x.isDeleted).ForEachAsync(d => {
+                d.isDeleted = false;
+                d.UpdatedDate = DateTime.Now;
+            });
+        }
+
         public async Task<bool> SaveChanges()
         {
             return (await _applicationDbContext.SaveChangesAsync() > 0);

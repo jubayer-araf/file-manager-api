@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="AppData\Settings\" />
     <Folder Include="AppData\Uploads\" />
   </ItemGroup>
 

@@ -32,6 +32,9 @@ namespace FileManagement
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IFolderRepository, FolderRepository>();
             services.AddScoped<IFileDetailsRepository, FileDetailsRepository>();
+            services.AddScoped<ISettingsFileService, SettingsFileService>();
+            services.AddScoped<ISettingsFileRepository, SettingsFileRepository>();
+            services.AddScoped<ITrashRepository, TrashRepository>();
 
         }
 
@@ -44,7 +47,7 @@ namespace FileManagement
             }
 
             app.UseCors(
-                options => options.WithOrigins("http://localhost:4200")
+                options => options.WithOrigins("http://localhost:4200", "http://localhost:4201")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials()

@@ -245,7 +245,15 @@ namespace FileManagement.Controllers
                         Description = $"User group for {folderModel.Name} folder of user {applicationUser.UserName}" });
                 var response = await _userManagementService.AddToUserGroup(applicationUser.AccessToken, userGroup.Id);
 
-                var pathPrefix = await _folderRepository.GetPathPrefix(folderModel.ParentFolderId);
+                var pathPrefix = "";
+
+                if (folderModel.ParentFolderId != null && folderModel.ParentFolderId != "") 
+                {
+                    pathPrefix = await _folderRepository.GetPathPrefix(folderModel.ParentFolderId);
+                    var parentFolder = await _folderRepository.GetFolderDetails(folderModel.ParentFolderId);
+                    parentFolder.Size++;
+                    _folderRepository.UpdateFolder(parentFolder);
+                }
 
                 FolderDetail folderDetail = new FolderDetail
                 {
@@ -326,11 +334,36 @@ namespace FileManagement.Controllers
                 ApplicationUser applicationUser = await _customAuthorizeService.GetUserAsync(ControllerContext);
                 if (applicationUser != null)
                 {
-                    var currentFolder = await _folderRepository.GetFolderDetails(id);
+                    var currentFolder = await _folderRepository.GetFolderDetails(id,applicationUser.Id);
                     if (currentFolder != null)
                     {
+                        currentFolder.DeletedByUser = true;
                         currentFolder.isDeleted = true;
+                        currentFolder.UpdatedDate = DateTime.Now;
                         var updatedFolder = _folderRepository.UpdateFolder(currentFolder);
+
+                        var childFolders = await _folderRepository.GetChildFolders(id,applicationUser.Id);
+                        
+                        if (childFolders != null)
+                        {
+                            await RemoveChilden(childFolders, applicationUser);
+                        }
+
+
+                        var childFiles = await _fileDetailsRepository.GetChildFiles(currentFolder.Id,applicationUser.Id);
+                        if(childFiles != null && childFiles.Count>0)
+                        {
+                            foreach (var childFile in childFiles)
+                            {
+                                childFile.isDeleted = true;
+                                childFile.UpdatedDate = DateTime.Now;
+                                _fileDetailsRepository.UpdateFileDetails(childFile);
+                                await _userManagementService.DeleteGroupByUserGroupId(applicationUser.AccessToken, childFile.UserGroupId);
+                            }
+                        }
+
+                        await _userManagementService.DeleteGroupByUserGroupId(applicationUser.AccessToken, currentFolder.UserGroupId);
+
                         await _folderRepository.SaveChangesAsync();
 
                         return Ok(updatedFolder);
@@ -345,6 +378,35 @@ namespace FileManagement.Controllers
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
+            }
+        }
+
+        private async Task RemoveChilden(List<FolderDetail> childFolders, ApplicationUser applicationUser)
+        {
+            if (childFolders == null || childFolders.Count <= 0) return;
+
+            foreach (var childFolder in childFolders)
+            {
+                var nestedChildFiles = await _fileDetailsRepository.GetChildFiles(childFolder.Id, applicationUser.Id);
+                if (nestedChildFiles != null && nestedChildFiles.Count > 0)
+                {
+                    foreach (var nestedChildFile in nestedChildFiles)
+                    {
+                        nestedChildFile.isDeleted = true;
+                        nestedChildFile.UpdatedDate = DateTime.Now;
+                        _fileDetailsRepository.UpdateFileDetails(nestedChildFile);
+                        await _userManagementService.DeleteGroupByUserGroupId(applicationUser.AccessToken, nestedChildFile.UserGroupId);
+                    }
+                }
+
+                childFolder.isDeleted = true;
+                childFolder.UpdatedDate = DateTime.Now;
+                _folderRepository.UpdateFolder(childFolder);
+                await _userManagementService.DeleteGroupByUserGroupId(applicationUser.AccessToken, childFolder.UserGroupId);
+
+
+                var nestedchildFolders = await _folderRepository.GetChildFolders(childFolder.Id, applicationUser.Id);
+                await RemoveChilden(nestedchildFolders, applicationUser);
             }
         }
     }

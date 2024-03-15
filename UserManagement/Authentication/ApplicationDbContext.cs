@@ -11,13 +11,20 @@ namespace UserManagement.Authentication
         {
 
         }
-
+        public DbSet<UserSetting> UserSettings { get; set; }
         public DbSet<UserGroup> UserGroups { get; set; }
         public DbSet<UserGroupMapping> UserGroupMappings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+
+            builder.Entity<UserSetting>(b =>
+            {
+                b.HasKey(r => r.Id);
+                b.ToTable("UserSettings");
+            });
 
             builder.Entity<UserGroup>(b =>
             {

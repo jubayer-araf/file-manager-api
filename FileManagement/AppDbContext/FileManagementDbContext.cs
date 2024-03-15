@@ -12,6 +12,7 @@ namespace FileManagement.AppDbContext
         public DbSet<FileType> FileTypes { get; set; }
         public DbSet<FolderDetail> FolderDetails { get; set; }
         public DbSet<FileDetail> FileDetails { get; set; }
+        public DbSet<SettingsFile> SettingsFiles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -34,6 +35,12 @@ namespace FileManagement.AppDbContext
             {
                 b.HasKey(r => r.Id);
                 b.ToTable("FileDetails");
+            });
+
+            builder.Entity<SettingsFile>(b =>
+            {
+                b.HasKey(r => r.Id);
+                b.ToTable("SettingsFile");
             });
         }
     }

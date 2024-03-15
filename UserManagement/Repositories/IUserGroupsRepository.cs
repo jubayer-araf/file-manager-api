@@ -14,6 +14,10 @@ namespace UserManagement.Repositories
         Task<IEnumerable<UserGroupMapping>> GetAllGroupMappingsAsync();
         Task<IEnumerable<UserGroupMapping>> GetGroupMappingsForUserAsync(string userId);
         Task<IEnumerable<UserGroupMapping>> GetGroupMappingsForGroupAsync(int groupId);
+        Task DeleteUserGroupMappingsByGroupId(int groupId);
+        Task DeleteUserGroupId(int groupId);
+        Task RestoreUserGroupMappingsByGroupId(int groupId);
+        Task RestoreUserGroupId(int groupId);
         Task<bool> SaveChanges();
     }
 }

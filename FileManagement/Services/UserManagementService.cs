@@ -54,5 +54,21 @@ namespace FileManagement.Services
             string responseBody = await response.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<IEnumerable<UserGroup>>(responseBody);
         }
+
+        public async Task<string> DeleteGroupByUserGroupId(string token, int userGroupId)
+        {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await client.DeleteAsync($"/api/usergroups/{userGroupId}");
+            string responseBody = await response.Content.ReadAsStringAsync();
+            return responseBody;
+        }
+
+        public async Task<string> RestoreGroupByUserGroupId(string token, int userGroupId)
+        {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await client.DeleteAsync($"/api/usergroups/restore/{userGroupId}");
+            string responseBody = await response.Content.ReadAsStringAsync();
+            return responseBody;
+        }
     }
 }
