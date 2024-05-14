@@ -97,6 +97,7 @@ namespace FileManagement.Controllers
             ApplicationUser applicationUser = await _customAuthorizeService.GetUserAsync(ControllerContext);
             if (applicationUser != null && fileUploadModel.FormFile != null)
             {
+
                 var currentFolder = await _folderRepository.GetFolderDetails(fileUploadModel.FolderId);
                 if (currentFolder != null)
                 {
@@ -157,6 +158,54 @@ namespace FileManagement.Controllers
                     parentFolder.Size++;
                     _folderRepository.UpdateFolder(parentFolder);
                     await _folderRepository.SaveChangesAsync();
+
+                    return Ok(fileDetailRes);
+                }
+                else if(fileUploadModel.FolderId == "root")
+                {
+
+                    var fileName = fileUploadModel.FormFile.FileName;
+
+                    var filePath = "/" + fileName;
+                    var fileExtension = Path.GetExtension(fileName);
+
+                    while (await _fileDetailsRepository.FileNameExists(filePath, applicationUser.Id))
+                    {
+                        fileName = Path.GetFileNameWithoutExtension(fileName) + "_copy" + fileExtension;
+                        filePath = "/" + fileName;
+                    }
+
+                    var userGroup = await _userManagementService.AddUserGroup(applicationUser.AccessToken,
+                            new UserGroupModel
+                            {
+                                Name = applicationUser.UserName + "-" + fileName,
+                                Description = $"User group for {fileName} file of user {applicationUser.UserName}"
+                            });
+                    var response = await _userManagementService.AddToUserGroup(applicationUser.AccessToken, userGroup.Id);
+
+                    FileDetail fileDetail = new FileDetail
+                    {
+                        Name = fileName,
+                        Description = $"This file is uploaded with name : {fileName}",
+                        Size = (int)fileUploadModel.FormFile.Length,
+                        FilePath = "/" + fileName,
+                        FolderId = "",
+                        FileTypeId = 1,
+                        Extension = fileExtension,
+                        UserGroupId = userGroup.Id,
+                        UserGroupName = userGroup.Name,
+                        OwnerId = applicationUser.Id,
+                        UpdatedDate = DateTime.UtcNow,
+                        CreatedDate = DateTime.UtcNow,
+                        CreatedByUserId = applicationUser.Id,
+                        LastUpdatedByUserId = applicationUser.Id,
+                        isDeleted = false
+                    };
+
+                    var fileDetailRes = await _fileDetailsRepository.AddFile(fileDetail);
+                    await _fileDetailsRepository.SaveChangesAsync();
+
+                    await _fileService.StoreFileAsync(fileUploadModel.FormFile, fileDetailRes.Id);
 
                     return Ok(fileDetailRes);
                 }

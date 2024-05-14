@@ -244,7 +244,10 @@ namespace FileManagement.Controllers
                     new UserGroupModel { Name = applicationUser.UserName + "-" + folderModel.Name, 
                         Description = $"User group for {folderModel.Name} folder of user {applicationUser.UserName}" });
                 var response = await _userManagementService.AddToUserGroup(applicationUser.AccessToken, userGroup.Id);
-
+                if(folderModel.ParentFolderId == "root")
+                {
+                    folderModel.ParentFolderId = "";
+                }
                 var pathPrefix = await _folderRepository.GetPathPrefix(folderModel.ParentFolderId);
 
                 FolderDetail folderDetail = new FolderDetail
